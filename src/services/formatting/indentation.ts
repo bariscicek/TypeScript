@@ -1,5 +1,9 @@
 module ts.formatting {
 
+    export const enum Constants {
+        Unknown = -1
+    }
+
     var internedTabsIndentation: string[];
     var internedSpacesIndentation: string[];
 

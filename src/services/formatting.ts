@@ -15,10 +15,6 @@ module ts.formatting {
         trailingTrivia: TextRangeWithKind[];
     }
 
-    const enum Constants {
-        Unknown = -1
-    }
-
     /* 
      * Indentation for the scope that can be dynamically recomputed.
      * i.e 

@@ -24,7 +24,7 @@ module ts.formatting {
             if (precedingToken.kind === SyntaxKind.CommaToken && precedingToken.parent.kind !== SyntaxKind.BinaryExpression) {
                 // previous token is comma that separates items in list - find the previous item and try to derive indentation from it
                 var actualIndentation = getActualIndentationForListItemBeforeComma(precedingToken, sourceFile, options);
-                if (actualIndentation !== -1) {
+                if (actualIndentation !== Constants.Unknown) {
                     return actualIndentation;
                 }
             }
@@ -52,7 +52,7 @@ module ts.formatting {
 
                 // check if current node is a list item - if yes, take indentation from it
                 var actualIndentation = getActualIndentationForListItem(current, sourceFile, options);
-                if (actualIndentation !== -1) {
+                if (actualIndentation !== Constants.Unknown) {
                     return actualIndentation;
                 }
 
@@ -83,7 +83,6 @@ module ts.formatting {
 
             var parent: Node = current.parent;
             var parentStart: LineAndCharacter;
-
             // walk upwards and collect indentations for pairs of parent-child nodes
             // indentation is not added if parent and child nodes start on the same line or if parent is IfStatement and child starts on the same line with 'else clause'
             while (parent) {
@@ -96,7 +95,7 @@ module ts.formatting {
                 if (useActualIndentation) {
                     // check if current node is a list item - if yes, take indentation from it
                     var actualIndentation = getActualIndentationForListItem(current, sourceFile, options);
-                    if (actualIndentation !== -1) {
+                    if (actualIndentation !== Constants.Unknown) {
                         return actualIndentation + indentationDelta;
                     }
                 }
@@ -108,7 +107,7 @@ module ts.formatting {
                 if (useActualIndentation) {
                     // try to fetch actual indentation for current node from source text
                     var actualIndentation = getActualIndentationForNode(current, parent, currentStart, parentAndChildShareLine, sourceFile, options);
-                    if (actualIndentation !== -1) {
+                    if (actualIndentation !== Constants.Unknown) {
                         return actualIndentation + indentationDelta;
                     }
                 }
@@ -137,7 +136,7 @@ module ts.formatting {
         }
 
         /*
-         * Function returns -1 if indentation cannot be determined
+         * Function returns Constants.Unknown if indentation cannot be determined
          */
         function getActualIndentationForListItemBeforeComma(commaToken: Node, sourceFile: SourceFile, options: EditorOptions): number {
             // previous token is comma that separates items in list - find the previous item and try to derive indentation from it
@@ -148,7 +147,7 @@ module ts.formatting {
         }
 
         /*
-         * Function returns -1 if actual indentation for node should not be used (i.e because node is nested expression)
+         * Function returns Constants.Unknown if actual indentation for node should not be used (i.e because node is nested expression)
          */
         function getActualIndentationForNode(current: Node,
             parent: Node,
@@ -165,7 +164,7 @@ module ts.formatting {
                 (parent.kind === SyntaxKind.SourceFile || !parentAndChildShareLine);
 
             if (!useActualIndentation) {
-                return -1;
+                return Constants.Unknown;
             }
 
             return findColumnForFirstNonWhitespaceCharacterInLine(currentLineAndChar, sourceFile, options);
@@ -264,11 +263,11 @@ module ts.formatting {
 
         function getActualIndentationForListItem(node: Node, sourceFile: SourceFile, options: EditorOptions): number {
             var containingList = getContainingList(node, sourceFile);
-            return containingList ? getActualIndentationFromList(containingList) : -1;
+            return containingList ? getActualIndentationFromList(containingList) : Constants.Unknown;
 
             function getActualIndentationFromList(list: Node[]): number {
                 var index = indexOf(list, node);
-                return index !== -1 ? deriveActualIndentationFromList(list, index, sourceFile, options) : -1;
+                return index !== -1 ? deriveActualIndentationFromList(list, index, sourceFile, options) : Constants.Unknown;
             }
         }
 
@@ -292,7 +291,7 @@ module ts.formatting {
 
                 lineAndCharacter = getStartLineAndCharacterForNode(list[i], sourceFile);
             }
-            return -1;
+            return Constants.Unknown;
         }
 
         function findColumnForFirstNonWhitespaceCharacterInLine(lineAndCharacter: LineAndCharacter, sourceFile: SourceFile, options: EditorOptions): number {
