@@ -2716,12 +2716,29 @@ module ts {
                 } while (node && node.kind !== SyntaxKind.ModuleDeclaration);
                 return <ModuleDeclaration>node;
             }
+            //@extjsemitter helper
+            function getModuleFullName(container : ModuleDeclaration) : string {
+                var parts = <string[]>[];
+                
+                while(container && container.kind ==  SyntaxKind.ModuleDeclaration){
+                    parts.unshift(container.name.text);
+                    container = <ModuleDeclaration>container.parent;
+                }
+
+                return parts.join('.');
+            }
 
             function emitModuleMemberName(node: Declaration) {
                 emitStart(node.name);
                 if (node.flags & NodeFlags.Export) {
                     var container = getContainingModule(node);
-                    write(container ? resolver.getLocalNameOfContainer(container) : "exports");
+                    if(container && node.kind == SyntaxKind.VariableDeclaration){
+                        write("Ext.ns('");
+                        write(getModuleFullName(container));
+                        write("')");
+                    }else{
+                        write(container ? resolver.getLocalNameOfContainer(container) : "exports");
+                    }
                     write(".");
                 }
                 emitNode(node.name);
