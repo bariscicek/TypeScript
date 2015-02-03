@@ -2155,7 +2155,13 @@ module ts {
                     write(prefix);
                     write(".");
                 }
-                writeTextOfNode(currentSourceFile, node);
+                var symbol = resolver.getNodeLinks(node).resolvedSymbol; //@extjs
+                if(symbol && symbol.exportSymbol){
+                    //full object path ex: Console.logInternal() may be emitted as Ext.util.deep.Console.logInternal()
+                    write(resolver.getFullyQualifiedName(symbol.exportSymbol));
+                }else{
+                    writeTextOfNode(currentSourceFile, node);
+                }
             }
 
             function emitIdentifier(node: Identifier) {
