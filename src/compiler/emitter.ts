@@ -2179,13 +2179,13 @@ module ts {
             function emitSuper(node: Node) {
                 var flags = resolver.getNodeCheckFlags(node);
                 if (flags & NodeCheckFlags.SuperInstance) {
-                    write("_super.prototype");
+                    write("this.callParent");
                 }
                 else if (flags & NodeCheckFlags.SuperStatic) {
-                    write("_super");
+                    write("this.callParent");
                 }
                 else {
-                    write("super");
+                    write("this.callParent");
                 }
             }
 
@@ -2309,8 +2309,10 @@ module ts {
                     return;
                 }
                 emit(node.expression);
-                write(".");
-                emit(node.name);
+                if(node.expression.kind !== SyntaxKind.SuperKeyword){ //extjs
+                    write(".");
+                    emit(node.name);
+                }
             }
 
             function emitQualifiedName(node: QualifiedName) {
@@ -2332,7 +2334,7 @@ module ts {
             function emitCallExpression(node: CallExpression) {
                 var superCall = false;
                 if (node.expression.kind === SyntaxKind.SuperKeyword) {
-                    write("_super");
+                    write("this.callParent");
                     superCall = true;
                 }
                 else {
@@ -2340,13 +2342,13 @@ module ts {
                     superCall = node.expression.kind === SyntaxKind.PropertyAccessExpression && (<PropertyAccessExpression>node.expression).expression.kind === SyntaxKind.SuperKeyword;
                 }
                 if (superCall) {
-                    write(".call(");
-                    emitThis(node.expression);
+                    write("(["); //write(".call(");extjs
+                    //emitThis(node.expression);
                     if (node.arguments.length) {
-                        write(", ");
+                        //write(", ");
                         emitCommaList(node.arguments, /*includeTrailingComma*/ false);
                     }
-                    write(")");
+                    write("])");
                 }
                 else {
                     write("(");
@@ -3008,18 +3010,19 @@ module ts {
                         emitLeadingComments(member);
                         emitStart(member);
                         emitStart((<MethodDeclaration>member).name);
-                        emitNode(node.name);
+                        //emitNode(node.name);
                         if (!(member.flags & NodeFlags.Static)) {
-                            write(".prototype");
+                            //write(".prototype");
                         }
-                        emitMemberAccessForPropertyName((<MethodDeclaration>member).name);
+                        //emitMemberAccessForPropertyName((<MethodDeclaration>member).name);
+                        emitNode((<MethodDeclaration>member).name);//extjs
                         emitEnd((<MethodDeclaration>member).name);
-                        write(" = ");
+                        write(" : ");
                         emitStart(member);
                         emitFunctionDeclaration(<MethodDeclaration>member);
                         emitEnd(member);
                         emitEnd(member);
-                        write(";");
+                        write(",");
                         emitTrailingComments(member);
                     }
                     else if (member.kind === SyntaxKind.GetAccessor || member.kind === SyntaxKind.SetAccessor) {
@@ -3159,15 +3162,15 @@ module ts {
                 //}
                 write("});"); //write(");");
                 emitEnd(node);
-                if (node.flags & NodeFlags.Export) {
-                    writeLine();
-                    emitStart(node);
-                    emitModuleMemberName(node);
-                    write(" = ");
-                    emit(node.name);
-                    emitEnd(node);
-                    write(";");
-                }
+                //if (node.flags & NodeFlags.Export) {
+                //    writeLine();
+                //    emitStart(node);
+                //    emitModuleMemberName(node);
+                //    write(" = ");
+                //    emit(node.name);
+                //    emitEnd(node);
+                //    write(";");
+                //}
                 emitTrailingComments(node);
 
                 function emitConstructorOfClass() {
@@ -3201,7 +3204,7 @@ module ts {
                             var superCall = findInitialSuperCall(ctor);
                             if (superCall) {
                                 writeLine();
-                                write("this.callParent(this, arguments);"); // emit(superCall); extjs
+                                emit(superCall);
                             }
                         }
                         emitParameterPropertyAssignments(ctor);
