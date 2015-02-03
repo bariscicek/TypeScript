@@ -2474,17 +2474,17 @@ module ts {
             }
 
             function emitBlock(node: Block) {
-                emitToken(SyntaxKind.OpenBraceToken, node.pos);
-                increaseIndent();
+                //emitToken(SyntaxKind.OpenBraceToken, node.pos);
+                //increaseIndent();
                 scopeEmitStart(node.parent);
                 if (node.kind === SyntaxKind.ModuleBlock) {
                     Debug.assert(node.parent.kind === SyntaxKind.ModuleDeclaration);
                     emitCaptureThisForNodeIfNecessary(node.parent);
                 }
                 emitLines(node.statements);
-                decreaseIndent();
-                writeLine();
-                emitToken(SyntaxKind.CloseBraceToken, node.statements.end);
+                //decreaseIndent();
+                //writeLine();
+                //emitToken(SyntaxKind.CloseBraceToken, node.statements.end);
                 scopeEmitEnd();
             }
 
@@ -3326,44 +3326,44 @@ module ts {
                     return emitPinnedOrTripleSlashComments(node);
                 }
                 emitLeadingComments(node);
-                emitStart(node);
-                write("var ");
-                emit(node.name);
-                write(";");
-                emitEnd(node);
-                writeLine();
-                emitStart(node);
-                write("(function (");
-                emitStart(node.name);
-                write(resolver.getLocalNameOfContainer(node));
-                emitEnd(node.name);
-                write(") ");
+                //emitStart(node);
+                //write("var ");
+                //emit(node.name);
+                //write(";");
+                //emitEnd(node);
+                //writeLine();
+                //emitStart(node);
+                //write("(function (");
+                //emitStart(node.name);
+                //write(resolver.getLocalNameOfContainer(node));
+                //emitEnd(node.name);
+                //write(") ");
                 if (node.body.kind === SyntaxKind.ModuleBlock) {
                     emit(node.body);
                 }
                 else {
-                    write("{");
-                    increaseIndent();
-                    scopeEmitStart(node);
-                    emitCaptureThisForNodeIfNecessary(node);
-                    writeLine();
+                    //write("{");
+                    //increaseIndent();
+                    //scopeEmitStart(node);
+                    //emitCaptureThisForNodeIfNecessary(node);
+                    //writeLine();
                     emit(node.body);
-                    decreaseIndent();
-                    writeLine();
-                    var moduleBlock = <ModuleBlock>getInnerMostModuleDeclarationFromDottedModule(node).body;
-                    emitToken(SyntaxKind.CloseBraceToken, moduleBlock.statements.end);
-                    scopeEmitEnd();
+                    //decreaseIndent();
+                    //writeLine();
+                    //var moduleBlock = <ModuleBlock>getInnerMostModuleDeclarationFromDottedModule(node).body;
+                    //emitToken(SyntaxKind.CloseBraceToken, moduleBlock.statements.end);
+                    //scopeEmitEnd();
                 }
-                write(")(");
-                if (node.flags & NodeFlags.Export) {
-                    emit(node.name);
-                    write(" = ");
-                }
-                emitModuleMemberName(node);
-                write(" || (");
-                emitModuleMemberName(node);
-                write(" = {}));");
-                emitEnd(node);
+                //write(")(");
+                //if (node.flags & NodeFlags.Export) {
+                //    emit(node.name);
+                //    write(" = ");
+                //}
+                //emitModuleMemberName(node);
+                //write(" || (");
+                //emitModuleMemberName(node);
+                //write(" = {}));");
+                //emitEnd(node);
                 emitTrailingComments(node);
             }
 
