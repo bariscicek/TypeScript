@@ -3518,7 +3518,7 @@ module ts {
 
                 // emit prologue directives prior to __extends
                 var startIndex = emitDirectivePrologues(node.statements, /*startWithNewLine*/ false);
-                if (!extendsEmitted && resolver.getNodeCheckFlags(node) & NodeCheckFlags.EmitExtends) {
+                if (false && !extendsEmitted && resolver.getNodeCheckFlags(node) & NodeCheckFlags.EmitExtends) { //extjs dont emite prologue
                     writeLine();
                     write("var __extends = this.__extends || function (d, b) {");
                     increaseIndent();
