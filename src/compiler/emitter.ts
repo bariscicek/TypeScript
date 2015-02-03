@@ -3073,24 +3073,68 @@ module ts {
                 });
             }
 
+            //@extjsemitter helper
+            function getDeclClassFullName(pullDecl : ClassDeclaration) :  string {
+                var parts = <string[]>[];
+                
+                if(pullDecl){
+                    parts.push(pullDecl.name.text);
+                    var moduleDecl = pullDecl.symbol.parent;
+
+                    while(moduleDecl){
+                        parts.unshift(moduleDecl.name);
+                        moduleDecl = moduleDecl.parent;
+                    }
+                }
+                return changeClassFullNameToCmdSupport(parts);
+            }
+
+            //@extjsemitter helper ///https://github.com/Microsoft/TypeScript/issues/1255
+            function getTypeNodeFullName(node : TypeNode) :  string {
+                var type = resolver.getTypeFromTypeNode(node);
+                var name : string;
+                
+                if(type && type.symbol){
+                    name = resolver.getFullyQualifiedName(type.symbol)
+                }else{
+                    var links = resolver.getNodeLinks(node);
+                    if(links && links.resolvedSymbol){
+                        name = resolver.getFullyQualifiedName(links.resolvedSymbol);
+                    }
+                }
+                
+                return name ? changeClassFullNameToCmdSupport(name) : 'UnknownType';
+            }
+            //@extjsemitter helper
+            function changeClassFullNameToCmdSupport(name : string) : string;
+            function changeClassFullNameToCmdSupport(parts : string[]) : string;
+            function changeClassFullNameToCmdSupport(name : any) : string {
+                var parts : string[] = name.split ? name.split('.') : name;
+                //sencha cmd support > change ST to Ext
+                if(parts[0] === this.senchaTouchNamespace && this.extJSNamespace){
+                    parts[0] = this.extJSNamespace;    
+                }
+                return parts.join('.');
+            }
+
             function emitClassDeclaration(node: ClassDeclaration) {
                 emitLeadingComments(node);
-                write("var ");
-                emit(node.name);
-                write(" = (function (");
+                write("Ext.define('"); //write("var "); extjs
+                write(getDeclClassFullName(node)); //emit(node.name); extjs
+                write("', {"); //write(" = (function ("); extjs
                 var baseTypeNode = getClassBaseTypeNode(node);
-                if (baseTypeNode) {
-                    write("_super");
-                }
-                write(") {");
+                //if (baseTypeNode) {
+                //    write("_super");
+                //}
+                //write(") {");
                 increaseIndent();
                 scopeEmitStart(node);
                 if (baseTypeNode) {
                     writeLine();
                     emitStart(baseTypeNode);
-                    write("__extends(");
-                    emit(node.name);
-                    write(", _super);");
+                    write("extend : '"); //extjs
+                    write(getTypeNodeFullName(baseTypeNode));//extjs
+                    write("',");
                     emitEnd(baseTypeNode);
                 }
                 writeLine();
@@ -3102,18 +3146,18 @@ module ts {
                     write("return ");
                     emitNode(node.name);
                 }
-                emitToken(SyntaxKind.CloseBraceToken, node.members.end, emitClassReturnStatement);
-                write(";");
+                //emitToken(SyntaxKind.CloseBraceToken, node.members.end, emitClassReturnStatement);
+                //write(";");
                 decreaseIndent();
                 writeLine();
-                emitToken(SyntaxKind.CloseBraceToken, node.members.end);
+                //emitToken(SyntaxKind.CloseBraceToken, node.members.end);
                 scopeEmitEnd();
-                emitStart(node);
-                write(")(");
-                if (baseTypeNode) {
-                    emit(baseTypeNode.typeName);
-                }
-                write(");");
+                //emitStart(node);
+                //write(")(");
+                //if (baseTypeNode) {
+                //    emit(baseTypeNode.typeName);
+                //}
+                write("});"); //write(");");
                 emitEnd(node);
                 if (node.flags & NodeFlags.Export) {
                     writeLine();
@@ -3135,11 +3179,12 @@ module ts {
                     });
 
                     var ctor = getFirstConstructorWithBody(node);
+                    if(!ctor) return; //lets extjs do the magic
                     if (ctor) {
                         emitLeadingComments(ctor);
                     }
                     emitStart(<Node>ctor || node);
-                    write("function ");
+                    write("constructor : function ");
                     emit(node.name);
                     emitSignatureParameters(ctor);
                     write(" {");
@@ -3156,7 +3201,7 @@ module ts {
                             var superCall = findInitialSuperCall(ctor);
                             if (superCall) {
                                 writeLine();
-                                emit(superCall);
+                                write("this.callParent(this, arguments);"); // emit(superCall); extjs
                             }
                         }
                         emitParameterPropertyAssignments(ctor);
@@ -3165,7 +3210,7 @@ module ts {
                         if (baseTypeNode) {
                             writeLine();
                             emitStart(baseTypeNode);
-                            write("_super.apply(this, arguments);");
+                            write("this.callParent(this, arguments);"); //write("_super.apply(this, arguments);"); extjs
                             emitEnd(baseTypeNode);
                         }
                     }
@@ -3183,6 +3228,7 @@ module ts {
                     emitToken(SyntaxKind.CloseBraceToken, ctor ? (<Block>ctor.body).statements.end : node.members.end);
                     scopeEmitEnd();
                     emitEnd(<Node>ctor || node);
+                    write(',');//extjs
                     if (ctor) {
                         emitTrailingComments(ctor);
                     }
