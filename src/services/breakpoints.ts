@@ -101,15 +101,18 @@ module ts.BreakpointResolver {
                     case SyntaxKind.ArrowFunction:
                         return spanInFunctionDeclaration(<FunctionLikeDeclaration>node);
 
-                    case SyntaxKind.FunctionBlock:
-                        return spanInFunctionBlock(<Block>node);
-
                     case SyntaxKind.Block:
+                        if (isFunctionBlock(node)) {
+                            return spanInFunctionBlock(<Block>node);
+                        }
+                        // Fall through
                     case SyntaxKind.TryBlock:
-                    case SyntaxKind.CatchBlock:
                     case SyntaxKind.FinallyBlock:
                     case SyntaxKind.ModuleBlock:
                         return spanInBlock(<Block>node);
+
+                    case SyntaxKind.CatchClause:
+                        return spanInBlock((<CatchClause>node).block);
 
                     case SyntaxKind.ExpressionStatement:
                         // span on the expression
@@ -174,7 +177,7 @@ module ts.BreakpointResolver {
 
                     case SyntaxKind.ImportDeclaration:
                         // import statement without including semicolon
-                        return textSpan(node, (<ImportDeclaration>node).entityName || (<ImportDeclaration>node).externalModuleName);
+                        return textSpan(node,(<ImportDeclaration>node).moduleReference);
 
                     case SyntaxKind.ModuleDeclaration:
                         // span on complete module if it is instantiated
@@ -242,8 +245,8 @@ module ts.BreakpointResolver {
                         }
 
                         // Breakpoint in type assertion goes to its operand
-                        if (node.parent.kind === SyntaxKind.TypeAssertion && (<TypeAssertion>node.parent).type === node) {
-                            return spanInNode((<TypeAssertion>node.parent).operand);
+                        if (node.parent.kind === SyntaxKind.TypeAssertionExpression && (<TypeAssertion>node.parent).type === node) {
+                            return spanInNode((<TypeAssertion>node.parent).expression);
                         }
 
                         // return type of function go to previous token
@@ -297,7 +300,7 @@ module ts.BreakpointResolver {
 
             function canHaveSpanInParameterDeclaration(parameter: ParameterDeclaration): boolean {
                 // Breakpoint is possible on parameter only if it has initializer, is a rest parameter, or has public or private modifier
-                return !!parameter.initializer || !!(parameter.flags & NodeFlags.Rest) ||
+                return !!parameter.initializer || parameter.dotDotDotToken !== undefined ||
                     !!(parameter.flags & NodeFlags.Public) || !!(parameter.flags & NodeFlags.Private);
             }
 
@@ -412,15 +415,20 @@ module ts.BreakpointResolver {
                             return undefined;
                         }
 
-                    case SyntaxKind.FunctionBlock:
                     case SyntaxKind.EnumDeclaration:
                     case SyntaxKind.ClassDeclaration:
                         // Span on close brace token
                         return textSpan(node);
 
                     case SyntaxKind.Block:
+                        if (isFunctionBlock(node.parent)) {
+                            // Span on close brace token
+                            return textSpan(node);
+                        }
+                        // fall through.
+
                     case SyntaxKind.TryBlock:
-                    case SyntaxKind.CatchBlock:
+                    case SyntaxKind.CatchClause:
                     case SyntaxKind.FinallyBlock:
                         return spanInNode((<Block>node.parent).statements[(<Block>node.parent).statements.length - 1]);;
 
@@ -483,8 +491,8 @@ module ts.BreakpointResolver {
             }
 
             function spanInGreaterThanOrLessThanToken(node: Node): TextSpan {
-                if (node.parent.kind === SyntaxKind.TypeAssertion) {
-                    return spanInNode((<TypeAssertion>node.parent).operand);
+                if (node.parent.kind === SyntaxKind.TypeAssertionExpression) {
+                    return spanInNode((<TypeAssertion>node.parent).expression);
                 }
 
                 return spanInNode(node.parent);

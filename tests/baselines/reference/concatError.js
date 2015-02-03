@@ -43,3 +43,18 @@ interface Array<T> {
 var fa;
 fa = fa.concat([0]);
 fa = fa.concat(0);
+/*
+
+
+
+
+declare class C<T> {
+    public m(p1: C<C<T>>): C<T>;
+    //public p: T;
+}
+
+var c: C<number>;
+var cc: C<C<number>>;
+
+c = c.m(cc);
+*/ 

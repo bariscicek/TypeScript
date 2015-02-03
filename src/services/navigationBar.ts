@@ -120,7 +120,7 @@ module ts.NavigationBar {
             if (functionDeclaration.kind === SyntaxKind.FunctionDeclaration) {
                 // A function declaration is 'top level' if it contains any function declarations 
                 // within it. 
-                if (functionDeclaration.body && functionDeclaration.body.kind === SyntaxKind.FunctionBlock) {
+                if (functionDeclaration.body && functionDeclaration.body.kind === SyntaxKind.Block) {
                     // Proper function declarations can only have identifier names
                     if (forEach((<Block>functionDeclaration.body).statements,
                         s => s.kind === SyntaxKind.FunctionDeclaration && !isEmpty((<FunctionDeclaration>s).name.text))) {
@@ -130,7 +130,7 @@ module ts.NavigationBar {
 
                     // Or if it is not parented by another function.  i.e all functions
                     // at module scope are 'top level'.
-                    if (functionDeclaration.parent.kind !== SyntaxKind.FunctionBlock) {
+                    if (!isFunctionBlock(functionDeclaration.parent)) {
                         return true;
                     }
                 }
@@ -203,7 +203,6 @@ module ts.NavigationBar {
                     if ((node.flags & NodeFlags.Modifier) === 0) {
                         return undefined;
                     }
-
                     return createItem(node, getTextOfNode((<ParameterDeclaration>node).name), ts.ScriptElementKind.memberVariableElement);
 
                 case SyntaxKind.Method:
@@ -333,7 +332,7 @@ module ts.NavigationBar {
             }
 
             function createFunctionItem(node: FunctionDeclaration) {
-                if (node.name && node.body && node.body.kind === SyntaxKind.FunctionBlock) {
+                if (node.name && node.body && node.body.kind === SyntaxKind.Block) {
                     var childItems = getItemsWorker(sortNodes((<Block>node.body).statements), createChildItem);
 
                     return getNavigationBarItem(node.name.text,
@@ -377,9 +376,10 @@ module ts.NavigationBar {
                     // Add the constructor parameters in as children of the class (for property parameters).
                     // Note that *all* parameters will be added to the nodes array, but parameters that
                     // are not properties will be filtered out later by createChildItem.
-                    var nodes: Node[] = constructor
-                        ? node.members.concat(constructor.parameters)
-                        : node.members;
+                    var nodes: Node[] = removeComputedProperties(node);
+                    if (constructor) {
+                        nodes.push.apply(nodes, constructor.parameters);
+                    }
 
                     var childItems = getItemsWorker(sortNodes(nodes), createChildItem);
                 }
@@ -394,7 +394,7 @@ module ts.NavigationBar {
             }
 
             function createEnumItem(node: EnumDeclaration): ts.NavigationBarItem {
-                var childItems = getItemsWorker(sortNodes(node.members), createChildItem);
+                var childItems = getItemsWorker(sortNodes(removeComputedProperties(node)), createChildItem);
                 return getNavigationBarItem(
                     node.name.text,
                     ts.ScriptElementKind.enumElement,
@@ -405,7 +405,7 @@ module ts.NavigationBar {
             }
 
             function createIterfaceItem(node: InterfaceDeclaration): ts.NavigationBarItem {
-                var childItems = getItemsWorker(sortNodes(node.members), createChildItem);
+                var childItems = getItemsWorker(sortNodes(removeComputedProperties(node)), createChildItem);
                 return getNavigationBarItem(
                     node.name.text,
                     ts.ScriptElementKind.interfaceElement,
@@ -414,6 +414,10 @@ module ts.NavigationBar {
                     childItems,
                     getIndent(node));
             }
+        }
+
+        function removeComputedProperties(node: ClassDeclaration | InterfaceDeclaration | EnumDeclaration): Declaration[] {
+            return filter<Declaration>(node.members, member => member.name === undefined || member.name.kind !== SyntaxKind.ComputedPropertyName);
         }
 
         function getInnermostModule(node: ModuleDeclaration): ModuleDeclaration {

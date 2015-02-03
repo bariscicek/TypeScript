@@ -15,10 +15,6 @@ module ts {
         True  = -1
     }
 
-    export interface Map<T> {
-        [index: string]: T;
-    }
-
     export const enum Comparison {
         LessThan    = -1,
         EqualTo     = 0,
@@ -28,15 +24,15 @@ module ts {
     export interface StringSet extends Map<any> { }
 
     export function forEach<T, U>(array: T[], callback: (element: T) => U): U {
-        var result: U;
         if (array) {
             for (var i = 0, len = array.length; i < len; i++) {
-                if (result = callback(array[i])) {
-                    break;
+                var result = callback(array[i]);
+                if (result) {
+                    return result;
                 }
             }
         }
-        return result;
+        return undefined;
     }
 
     export function contains<T>(array: T[], value: T): boolean {

@@ -6,43 +6,18 @@
 
 module RWC {
     function runWithIOLog(ioLog: IOLog, fn: () => void) {
-        var oldSys = sys;
+        var oldSys = ts.sys;
 
-        var wrappedSys = Playback.wrapSystem(sys);
+        var wrappedSys = Playback.wrapSystem(ts.sys);
         wrappedSys.startReplayFromData(ioLog);
-        sys = wrappedSys;
+        ts.sys = wrappedSys;
 
         try {
             fn();
         } finally {
             wrappedSys.endReplay();
-            sys = oldSys;
+            ts.sys = oldSys;
         }
-    }
-
-    function collateOutputs(outputFiles: Harness.Compiler.GeneratedFile[], clean?: (s: string) => string) {
-        // Collect, test, and sort the filenames
-        function cleanName(fn: string) {
-            var lastSlash = ts.normalizeSlashes(fn).lastIndexOf('/');
-            return fn.substr(lastSlash + 1).toLowerCase();
-        }
-        outputFiles.sort((a, b) => cleanName(a.fileName).localeCompare(cleanName(b.fileName)));
-
-        // Emit them
-        var result = '';
-        ts.forEach(outputFiles, outputFile => {
-            // Some extra spacing if this isn't the first file
-            if (result.length) result = result + '\r\n\r\n';
-
-            // Filename header + content
-            result = result + '/*====== ' + outputFile.fileName + ' ======*/\r\n';
-            if (clean) {
-                result = result + clean(outputFile.code);
-            } else {
-                result = result + outputFile.code;
-            }
-        });
-        return result;
     }
 
     export function runRWCTest(jsonPath: string) {
@@ -53,12 +28,6 @@ module RWC {
             var compilerOptions: ts.CompilerOptions;
             var baselineOpts: Harness.Baseline.BaselineOptions = { Subfolder: 'rwc' };
             var baseName = /(.*)\/(.*).json/.exec(ts.normalizeSlashes(jsonPath))[2];
-            // Compile .d.ts files
-            var declFileCompilationResult: {
-                declInputFiles: { unitName: string; content: string }[];
-                declOtherFiles: { unitName: string; content: string }[];
-                declResult: Harness.Compiler.CompilerResult;
-            };
 
             after(() => {
                 // Mocha holds onto the closure environment of the describe callback even after the test is done.
@@ -69,7 +38,6 @@ module RWC {
                 compilerOptions = undefined;
                 baselineOpts = undefined;
                 baseName = undefined;
-                declFileCompilationResult = undefined;
             });
 
             it('can compile', () => {
@@ -99,7 +67,7 @@ module RWC {
                     }
 
                     ts.forEach(ioLog.filesRead, fileRead => {
-                        var resolvedPath = ts.normalizeSlashes(sys.resolvePath(fileRead.path));
+                        var resolvedPath = ts.normalizeSlashes(ts.sys.resolvePath(fileRead.path));
                         var inInputList = ts.forEach(inputFiles, inputFile=> inputFile.unitName === resolvedPath);
                         if (!inInputList) {
                             // Add the file to other files
@@ -117,9 +85,9 @@ module RWC {
                 });
 
                 function getHarnessCompilerInputUnit(fileName: string) {
-                    var unitName = ts.normalizeSlashes(sys.resolvePath(fileName));
+                    var unitName = ts.normalizeSlashes(ts.sys.resolvePath(fileName));
                     try {
-                        var content = sys.readFile(unitName);
+                        var content = ts.sys.readFile(unitName);
                     }
                     catch (e) {
                         // Leave content undefined.
@@ -128,15 +96,10 @@ module RWC {
                 }
             });
 
-            // Baselines
-            it('Correct compiler generated.d.ts', () => {
-                declFileCompilationResult = Harness.Compiler.getCompiler().compileDeclarationFiles(inputFiles, otherFiles, compilerResult, /*settingscallback*/ undefined, compilerOptions);
-            });
-
 
             it('has the expected emitted code', () => {
                 Harness.Baseline.runBaseline('has the expected emitted code', baseName + '.output.js', () => {
-                    return collateOutputs(compilerResult.files, s => SyntacticCleaner.clean(s));
+                    return Harness.Compiler.collateOutputs(compilerResult.files, s => SyntacticCleaner.clean(s));
                 }, false, baselineOpts);
             });
 
@@ -145,7 +108,7 @@ module RWC {
                     if (compilerResult.errors.length || !compilerResult.declFilesCode.length) {
                         return null;
                     }
-                    return collateOutputs(compilerResult.declFilesCode);
+                    return Harness.Compiler.collateOutputs(compilerResult.declFilesCode);
                 }, false, baselineOpts);
             });
 
@@ -155,7 +118,7 @@ module RWC {
                         return null;
                     }
 
-                    return collateOutputs(compilerResult.sourceMaps);
+                    return Harness.Compiler.collateOutputs(compilerResult.sourceMaps);
                 }, false, baselineOpts);
             });
 
@@ -177,15 +140,18 @@ module RWC {
                 }, false, baselineOpts);
             });
 
-            it('has no errors in generated declaration files', () => {
+            // Ideally, a generated declaration file will have no errors. But we allow generated
+            // declaration file errors as part of the baseline.
+            it('has the expected errors in generated declaration files', () => {
                 if (compilerOptions.declaration && !compilerResult.errors.length) {
-                    Harness.Baseline.runBaseline('has no errors in generated declaration files', baseName + '.dts.errors.txt', () => {
+                    Harness.Baseline.runBaseline('has the expected errors in generated declaration files', baseName + '.dts.errors.txt', () => {
+                        var declFileCompilationResult = Harness.Compiler.getCompiler().compileDeclarationFiles(inputFiles, otherFiles, compilerResult, /*settingscallback*/ undefined, compilerOptions);
                         if (declFileCompilationResult.declResult.errors.length === 0) {
                             return null;
                         }
 
                         return Harness.Compiler.minimalDiagnosticsToString(declFileCompilationResult.declResult.errors) +
-                            sys.newLine + sys.newLine +
+                            ts.sys.newLine + ts.sys.newLine +
                             Harness.Compiler.getErrorBaseline(declFileCompilationResult.declInputFiles.concat(declFileCompilationResult.declOtherFiles), declFileCompilationResult.declResult.errors);
                     }, false, baselineOpts);
                 }
