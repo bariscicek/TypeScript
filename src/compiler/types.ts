@@ -768,6 +768,7 @@ module ts {
         getEnumMemberValue(node: EnumMember): number;
         isValidPropertyAccess(node: PropertyAccess, propertyName: string): boolean;
         getAliasedSymbol(symbol: Symbol): Symbol;
+        resolveName(location: Node, name: string, meaning: SymbolFlags, nameNotFoundMessage: DiagnosticMessage, nameArg: string | Identifier): Symbol;
     }
 
     export interface SymbolDisplayBuilder {
@@ -859,6 +860,10 @@ module ts {
         // Returns the constant value this property access resolves to, or 'undefined' for a non-constant
         getConstantValue(node: PropertyAccess | IndexedAccess): number;
         isEmitBlocked(sourceFile?: SourceFile): boolean;
+        getFullyQualifiedName(symbol: Symbol) : string;
+        getTypeFromTypeNode(node : TypeNode) : Type;
+        getNodeLinks(node : Node) : NodeLinks;
+        getSuperContainer(node: Node): Node ;
     }
 
     export const enum SymbolFlags {

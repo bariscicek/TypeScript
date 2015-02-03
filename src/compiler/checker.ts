@@ -113,6 +113,7 @@ module ts {
             getAliasedSymbol: resolveImport,
             hasEarlyErrors,
             isEmitBlocked,
+            resolveName,
         };
 
         var undefinedSymbol = createSymbol(SymbolFlags.Property | SymbolFlags.Transient, "undefined");
@@ -9164,6 +9165,11 @@ module ts {
                 isSymbolAccessible,
                 isEntityNameVisible,
                 getConstantValue,
+                //https://github.com/Microsoft/TypeScript/issues/1255
+                getFullyQualifiedName,
+                getTypeFromTypeNode,
+                getNodeLinks,
+                getSuperContainer,
             };
         }
 

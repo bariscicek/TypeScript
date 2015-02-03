@@ -2144,7 +2144,11 @@ module ts {
             function emitSuper(node: Node) {
                 var flags = resolver.getNodeCheckFlags(node);
                 if (flags & NodeCheckFlags.SuperInstance) {
-                    write("_super.prototype");
+                    //write("_super.prototype");
+                    var superNode = resolver.getSuperContainer(node);
+                    
+                    write(getTypeNodeFullName(node));//extjs
+                    write('.superclass');//extjs
                 }
                 else if (flags & NodeCheckFlags.SuperStatic) {
                     write("_super");
@@ -2380,17 +2384,23 @@ module ts {
             }
 
             function emitBlock(node: Block) {
-                emitToken(SyntaxKind.OpenBraceToken, node.pos);
-                increaseIndent();
+                if(node.kind !== SyntaxKind.ModuleBlock){ //extjs
+                    emitToken(SyntaxKind.OpenBraceToken, node.pos);
+                    increaseIndent();
+                }
+                
                 scopeEmitStart(node.parent);
                 if (node.kind === SyntaxKind.ModuleBlock) {
                     Debug.assert(node.parent.kind === SyntaxKind.ModuleDeclaration);
                     emitCaptureThisForNodeIfNecessary(node.parent);
                 }
                 emitLines(node.statements);
-                decreaseIndent();
-                writeLine();
-                emitToken(SyntaxKind.CloseBraceToken, node.statements.end);
+                
+                if(node.kind !== SyntaxKind.ModuleBlock){ //extjs
+                    emitToken(SyntaxKind.CloseBraceToken, node.statements.end);
+                    decreaseIndent();
+                    writeLine();
+                }
                 scopeEmitEnd();
             }
 
@@ -2912,18 +2922,19 @@ module ts {
                         emitLeadingComments(member);
                         emitStart(member);
                         emitStart((<MethodDeclaration>member).name);
-                        emitNode(node.name);
+                        //emitNode(node.name);
                         if (!(member.flags & NodeFlags.Static)) {
-                            write(".prototype");
+                            //write(".prototype");
                         }
-                        emitMemberAccess((<MethodDeclaration>member).name);
+                        //emitMemberAccess((<MethodDeclaration>member).name);
+                        emitNode((<MethodDeclaration>member).name);//extjs
                         emitEnd((<MethodDeclaration>member).name);
-                        write(" = ");
+                        write(" : ");
                         emitStart(member);
                         emitFunctionDeclaration(<MethodDeclaration>member);
                         emitEnd(member);
                         emitEnd(member);
-                        write(";");
+                        write(",");
                         emitTrailingComments(member);
                     }
                     else if (member.kind === SyntaxKind.GetAccessor || member.kind === SyntaxKind.SetAccessor) {
@@ -2976,27 +2987,81 @@ module ts {
                     }
                 });
             }
+            //@extjsemitter helper
+            function getDeclClassFullName(pullDecl : ClassDeclaration) :  string {
+                var parts = <string[]>[];
+                
+                if(pullDecl){
+                    parts.push(pullDecl.name.text);
+                    var moduleDecl = pullDecl.symbol.parent;
 
+                    while(moduleDecl){
+                        parts.unshift(moduleDecl.name);
+                        moduleDecl = moduleDecl.parent;
+                    }
+                }
+                return changeClassFullNameToCmdSupport(parts);
+            }
+
+            //@extjsemitter helper ///https://github.com/Microsoft/TypeScript/issues/1255
+            function getTypeNodeFullName(node : TypeNode) :  string {
+                var type = resolver.getTypeFromTypeNode(node);
+                var name : string;
+                
+                if(type && type.symbol){
+                    name = resolver.getFullyQualifiedName(type.symbol)
+                }else{
+                    var links = resolver.getNodeLinks(node);
+                    if(links && links.resolvedSymbol){
+                        name = resolver.getFullyQualifiedName(links.resolvedSymbol);
+                    }
+                }
+                
+                return name ? changeClassFullNameToCmdSupport(name) : 'UnknownType';
+            }
+            //@extjsemitter helper
+            function changeClassFullNameToCmdSupport(name : string) : string;
+            function changeClassFullNameToCmdSupport(parts : string[]) : string;
+            function changeClassFullNameToCmdSupport(name : any) : string {
+                var parts : string[] = name.split ? name.split('.') : name;
+                //sencha cmd support > change ST to Ext
+                if(parts[0] === this.senchaTouchNamespace && this.extJSNamespace){
+                    parts[0] = this.extJSNamespace;    
+                }
+                return parts.join('.');
+            }
+
+            //@extjsemitter changes
             function emitClassDeclaration(node: ClassDeclaration) {
                 emitLeadingComments(node);
-                write("var ");
-                emit(node.name);
-                write(" = (function (");
-                if (node.baseType) {
-                    write("_super");
-                }
-                write(") {");
+                //write("var ");
+                //emit(node.name);
+                //write(" = (function (");
+                //if (node.baseType) {
+                //    write("_super");
+                //}
+                //write(") {");
+
+                write("Ext.define('"); //extjs
+                write(getDeclClassFullName(node)); //extjs
+                write("', {"); //extjs
                 increaseIndent();
-                scopeEmitStart(node);
-                if (node.baseType) {
-                    writeLine();
-                    emitStart(node.baseType);
-                    write("__extends(");
-                    emit(node.name);
-                    write(", _super);");
-                    emitEnd(node.baseType);
-                }
+                //scopeEmitStart(node);
+                //if (node.baseType) {
+                //    writeLine();
+                //    emitStart(node.baseType);
+                //    write("__extends(");
+                //    emit(node.name);
+                //    write(", _super);");
+                //    emitEnd(node.baseType);
+                //}
                 writeLine();
+                if (node.baseType){ //extjs
+                    write("extend : '"); //extjs
+                    write(getTypeNodeFullName(node.baseType));//extjs
+                    write("',");
+                    writeLine();
+                }
                 emitConstructorOfClass();
                 emitMemberFunctions(node);
                 emitMemberAssignments(node, NodeFlags.Static);
@@ -3005,28 +3070,28 @@ module ts {
                     write("return ");
                     emitNode(node.name);
                 }
-                emitToken(SyntaxKind.CloseBraceToken, node.members.end, emitClassReturnStatement);
-                write(";");
+                //emitToken(SyntaxKind.CloseBraceToken, node.members.end, emitClassReturnStatement);
+                //write(";");
                 decreaseIndent();
-                writeLine();
-                emitToken(SyntaxKind.CloseBraceToken, node.members.end);
-                scopeEmitEnd();
-                emitStart(node);
-                write(")(");
-                if (node.baseType) {
-                    emit(node.baseType.typeName);
-                }
-                write(");");
-                emitEnd(node);
-                if (node.flags & NodeFlags.Export) {
-                    writeLine();
-                    emitStart(node);
-                    emitModuleMemberName(node);
-                    write(" = ");
-                    emit(node.name);
-                    emitEnd(node);
-                    write(";");
-                }
+                //writeLine();
+                //emitToken(SyntaxKind.CloseBraceToken, node.members.end);
+                //scopeEmitEnd();
+                //emitStart(node);
+                //write(")(");
+                //if (node.baseType) {
+                //    emit(node.baseType.typeName);
+                //}
+                write("});");//extjs
+                //emitEnd(node);
+                //if (node.flags & NodeFlags.Export) {
+                //    writeLine();
+                //    emitStart(node);
+                //    emitModuleMemberName(node);
+                //    write(" = ");
+                //    emit(node.name);
+                //    emitEnd(node);
+                //    write(";");
+                //}
                 emitTrailingComments(node);
 
                 function emitConstructorOfClass() {
@@ -3041,9 +3106,10 @@ module ts {
                     if (ctor) {
                         emitLeadingComments(ctor);
                     }
-                    emitStart(<Node>ctor || node);
-                    write("function ");
-                    emit(node.name);
+                    //emitStart(<Node>ctor || node);
+                    //write("function ");
+                    write("constructor : function");
+                    //emit(node.name);
                     emitSignatureParameters(ctor);
                     write(" {");
                     scopeEmitStart(node, "constructor");
@@ -3068,7 +3134,7 @@ module ts {
                         if (node.baseType) {
                             writeLine();
                             emitStart(node.baseType);
-                            write("_super.apply(this, arguments);");
+                            write("this.callParent(this, arguments);");//@extjs
                             emitEnd(node.baseType);
                         }
                     }
@@ -3086,6 +3152,7 @@ module ts {
                     emitToken(SyntaxKind.CloseBraceToken, ctor ? (<Block>ctor.body).statements.end : node.members.end);
                     scopeEmitEnd();
                     emitEnd(<Node>ctor || node);
+                    write(',');//extjs
                     if (ctor) {
                         emitTrailingComments(ctor);
                     }
@@ -3174,50 +3241,50 @@ module ts {
                     return recursiveInnerModule || <ModuleDeclaration>moduleDeclaration.body;
                 }
             }
-
+            //@extjs changes
             function emitModuleDeclaration(node: ModuleDeclaration) {
                 if (getModuleInstanceState(node) !== ModuleInstanceState.Instantiated) {
                     return emitPinnedOrTripleSlashComments(node);
                 }
                 emitLeadingComments(node);
-                emitStart(node);
-                write("var ");
-                emit(node.name);
-                write(";");
-                emitEnd(node);
-                writeLine();
-                emitStart(node);
-                write("(function (");
-                emitStart(node.name);
-                write(resolver.getLocalNameOfContainer(node));
-                emitEnd(node.name);
-                write(") ");
+                //emitStart(node);
+                //write("var ");
+                //emit(node.name);
+                //write(";");
+                //emitEnd(node);
+                //writeLine();
+                //emitStart(node);
+                //write("(function (");
+                //emitStart(node.name);
+                //write(resolver.getLocalNameOfContainer(node));
+                //emitEnd(node.name);
+                //write(") ");
                 if (node.body.kind === SyntaxKind.ModuleBlock) {
                     emit(node.body);
                 }
                 else {
-                    write("{");
-                    increaseIndent();
-                    scopeEmitStart(node);
-                    emitCaptureThisForNodeIfNecessary(node);
-                    writeLine();
+                    //write("{");
+                    //increaseIndent();
+                    //scopeEmitStart(node);
+                    //emitCaptureThisForNodeIfNecessary(node);
+                    //writeLine();
                     emit(node.body);
-                    decreaseIndent();
-                    writeLine();
-                    var moduleBlock = <Block>getInnerMostModuleDeclarationFromDottedModule(node).body;
-                    emitToken(SyntaxKind.CloseBraceToken, moduleBlock.statements.end);
-                    scopeEmitEnd();
+                    //decreaseIndent();
+                    //writeLine();
+                    //var moduleBlock = <Block>getInnerMostModuleDeclarationFromDottedModule(node).body;
+                    //emitToken(SyntaxKind.CloseBraceToken, moduleBlock.statements.end);
+                    //scopeEmitEnd();
                 }
-                write(")(");
-                if (node.flags & NodeFlags.Export) {
-                    emit(node.name);
-                    write(" = ");
-                }
-                emitModuleMemberName(node);
-                write(" || (");
-                emitModuleMemberName(node);
-                write(" = {}));");
-                emitEnd(node);
+                //write(")(");
+                //if (node.flags & NodeFlags.Export) {
+                //    emit(node.name);
+                //    write(" = ");
+                //}
+                //emitModuleMemberName(node);
+                //write(" || (");
+                //emitModuleMemberName(node);
+                //write(" = {}));");
+                //emitEnd(node);
                 emitTrailingComments(node);
             }
 
@@ -3373,23 +3440,23 @@ module ts {
                 emitDetachedComments(node);
                 // emit prologue directives prior to __extends
                 var startIndex = emitDirectivePrologues(node.statements, /*startWithNewLine*/ false);
-                if (!extendsEmitted && resolver.getNodeCheckFlags(node) & NodeCheckFlags.EmitExtends) {
-                    writeLine();
-                    write("var __extends = this.__extends || function (d, b) {");
-                    increaseIndent();
-                    writeLine();
-                    write("for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];");
-                    writeLine();
-                    write("function __() { this.constructor = d; }");
-                    writeLine();
-                    write("__.prototype = b.prototype;");
-                    writeLine();
-                    write("d.prototype = new __();");
-                    decreaseIndent();
-                    writeLine();
-                    write("};");
-                    extendsEmitted = true;
-                }
+                //if (!extendsEmitted && resolver.getNodeCheckFlags(node) & NodeCheckFlags.EmitExtends) { //@extjs
+                //    writeLine();
+                //    write("var __extends = this.__extends || function (d, b) {");
+                //    increaseIndent();
+                //    writeLine();
+                //    write("for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];");
+                //    writeLine();
+                //    write("function __() { this.constructor = d; }");
+                //    writeLine();
+                //    write("__.prototype = b.prototype;");
+                //    writeLine();
+                //    write("d.prototype = new __();");
+                //    decreaseIndent();
+                //    writeLine();
+                //    write("};");
+                //    extendsEmitted = true;
+                //}
                 if (isExternalModule(node)) {
                     if (compilerOptions.module === ModuleKind.AMD) {
                         emitAMDModule(node, startIndex);
