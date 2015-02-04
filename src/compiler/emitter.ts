@@ -3045,7 +3045,7 @@ module ts {
                         emitFunctionDeclaration(<MethodDeclaration>member);
                         emitEnd(member);
                         emitEnd(member);
-                        write(",");
+                        //write(",");
                         emitTrailingComments(member);
                     }
                     else if (member.kind === SyntaxKind.GetAccessor || member.kind === SyntaxKind.SetAccessor) {
@@ -3142,7 +3142,110 @@ module ts {
                 }
                 return parts.join('.');
             }
+            function isClassMemberMethod(node : Node) : boolean {
+                return (node.kind === SyntaxKind.Constructor || node.kind === SyntaxKind.Method ||
+                   node.kind === SyntaxKind.GetAccessor || node.kind === SyntaxKind.SetAccessor);
+            }
+            function hasClassMemberBody(node : Node) : boolean {
+                if(isClassMemberMethod(node)){
+                    return !!(<MethodDeclaration>node).body
+                }
+                if(node.kind === SyntaxKind.Property && (<PropertyDeclaration>node).initializer){
+                    return true;
+                }
+                return  false;
+            }
+            function emitClassMember(member : Node, emitConstructorOfClass : Function, toemit : number, emitted : number) : boolean{
+                if (!hasClassMemberBody(member)) {
+                    emitPinnedOrTripleSlashComments(member);
+                    return false;
+                }
+                
+                writeLine();
+                emitLeadingComments(member);
+                emitStart(member);
+                emitStart((<PropertyDeclaration>member).name);
+                
+                emitNode((<PropertyDeclaration>member).name);
+                emitEnd((<PropertyDeclaration>member).name);
+                write(" : ");
+                emitStart(member);
+                if(member.kind === SyntaxKind.Property){
+                    emit((<PropertyDeclaration>member).initializer);
+               }else{
+                    emitFunctionDeclaration((<MethodDeclaration>member));
+                }
 
+                emitEnd(member);
+                emitEnd(member);
+
+                if(emitted < toemit - 1){
+                    write(',');
+                }
+
+                emitTrailingComments(member);
+
+                return true;
+                
+            }
+            //@extjs helper
+            function emitClassMembers(node : ClassDeclaration, emitConstructorOfClass : Function){
+                var totalStatic   = 0;
+                var totalInstance = 0;
+                var emitted       = 0;
+                var baseTypeNode  = getClassBaseTypeNode(node);
+
+                forEach(node.members, member => {
+                    var emit      = hasClassMemberBody(member);
+                    totalStatic   += ((member.flags & NodeFlags.Static) && emit) ?  1: 0;
+                    totalInstance += (!(member.flags & NodeFlags.Static) && emit) ?  1: 0;
+                });
+
+                if (baseTypeNode) {
+                    writeLine();
+                    emitStart(baseTypeNode);
+                    write("extend : '"); //extjs
+                    write(getTypeNodeFullName(baseTypeNode));//extjs
+                    write((totalStatic + totalInstance) > 0 ? "'," : "'");
+                    emitEnd(baseTypeNode);
+                }
+
+                var toemit = totalInstance + (totalStatic > 0 ? 1 : 0);
+
+                forEach(node.members, member => {
+                    var lemitted = false;
+                    if(!(member.flags & NodeFlags.Static)){
+                        if(member.kind === SyntaxKind.Constructor){
+                            if((<MethodDeclaration>member).body){
+                                writeLine();
+                                emitConstructorOfClass();
+                                if(emitted < toemit - 1 || totalStatic > 0){
+                                    write(',');
+                                }
+                                emitted++;
+                                
+                            }
+                        }else{
+                            emitted += emitClassMember(member, emitConstructorOfClass, toemit, emitted) ? 1 : 0;
+                        }
+                    }
+                });
+
+                if(totalStatic > 0){
+                    writeLine();
+                    write('statics : {');
+                    increaseIndent();
+                    emitted = 0;
+                    forEach(node.members, member => {
+                        if(member.flags & NodeFlags.Static){
+                            emitted += emitClassMember(member, emitConstructorOfClass, totalStatic, emitted) ? 1 : 0;
+                        }
+                    });
+                    decreaseIndent();
+                    writeLine();
+                    write('}');
+                }
+            }
             function emitClassDeclaration(node: ClassDeclaration) {
                 emitLeadingComments(node);
                 write("Ext.define('"); //write("var "); extjs
@@ -3155,18 +3258,19 @@ module ts {
                 //write(") {");
                 increaseIndent();
                 scopeEmitStart(node);
-                if (baseTypeNode) {
-                    writeLine();
-                    emitStart(baseTypeNode);
-                    write("extend : '"); //extjs
-                    write(getTypeNodeFullName(baseTypeNode));//extjs
-                    write("',");
-                    emitEnd(baseTypeNode);
-                }
+                //if (baseTypeNode) {
+                //    writeLine();
+                //    emitStart(baseTypeNode);
+                //    write("extend : '"); //extjs
+                //    write(getTypeNodeFullName(baseTypeNode));//extjs
+                //    write("',");
+                //    emitEnd(baseTypeNode);
+                //}
                 writeLine();
-                emitConstructorOfClass();
-                emitMemberFunctions(node);
-                emitMemberAssignments(node, NodeFlags.Static);
+                //emitConstructorOfClass();
+                emitClassMembers(node, emitConstructorOfClass);
+                //emitMemberFunctions(node);
+                //emitMemberAssignments(node, NodeFlags.Static);
                 writeLine();
                 function emitClassReturnStatement() {
                     write("return ");
@@ -3240,7 +3344,7 @@ module ts {
                             emitEnd(baseTypeNode);
                         }
                     }
-                    emitMemberAssignments(node, /*nonstatic*/0);
+                    //emitMemberAssignments(node, /*nonstatic*/0);  @extjs dont initialize properties in a constructor instance > extjs style is in prototype
                     if (ctor) {
                         var statements: Node[] = (<Block>ctor.body).statements;
                         if (superCall) statements = statements.slice(1);
@@ -3254,7 +3358,6 @@ module ts {
                     emitToken(SyntaxKind.CloseBraceToken, ctor ? (<Block>ctor.body).statements.end : node.members.end);
                     scopeEmitEnd();
                     emitEnd(<Node>ctor || node);
-                    write(',');//extjs
                     if (ctor) {
                         emitTrailingComments(ctor);
                     }
