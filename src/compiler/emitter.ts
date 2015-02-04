@@ -2150,15 +2150,17 @@ module ts {
             }
 
             function emitExpressionIdentifier(node: Identifier) {
-                var prefix = resolver.getExpressionNamePrefix(node);
-                if (prefix) {
-                    write(prefix);
-                    write(".");
-                }
+                //@extjs dont prefix because we will emit full node path
+                //var prefix = resolver.getExpressionNamePrefix(node);
+                //if (prefix) {
+                //    write(prefix);
+                //    write(".");
+                //}
                 var symbol = resolver.getNodeLinks(node).resolvedSymbol; //@extjs
-                if(symbol && symbol.exportSymbol){
+                if(symbol){
                     //full object path ex: Console.logInternal() may be emitted as Ext.util.deep.Console.logInternal()
-                    write(resolver.getFullyQualifiedName(symbol.exportSymbol));
+                    //caution: exportSymbol exists only in classes > modules is only symbol  
+                    write(resolver.getFullyQualifiedName(symbol.exportSymbol || symbol));
                 }else{
                     writeTextOfNode(currentSourceFile, node);
                 }
