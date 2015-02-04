@@ -2482,17 +2482,21 @@ module ts {
             }
 
             function emitBlock(node: Block) {
-                //emitToken(SyntaxKind.OpenBraceToken, node.pos);
-                //increaseIndent();
+                if(node.kind !== SyntaxKind.ModuleBlock){//@extj dont emit module block
+                    emitToken(SyntaxKind.OpenBraceToken, node.pos);
+                    increaseIndent();
+                }
                 scopeEmitStart(node.parent);
                 if (node.kind === SyntaxKind.ModuleBlock) {
                     Debug.assert(node.parent.kind === SyntaxKind.ModuleDeclaration);
                     emitCaptureThisForNodeIfNecessary(node.parent);
                 }
                 emitLines(node.statements);
-                //decreaseIndent();
-                //writeLine();
-                //emitToken(SyntaxKind.CloseBraceToken, node.statements.end);
+                if(node.kind !== SyntaxKind.ModuleBlock){
+                    decreaseIndent();
+                    writeLine();
+                    emitToken(SyntaxKind.CloseBraceToken, node.statements.end);
+                }
                 scopeEmitEnd();
             }
 
