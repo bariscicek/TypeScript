@@ -3369,6 +3369,38 @@ module ts {
             }
 
             function emitEnumDeclaration(node: EnumDeclaration) {
+               
+                write("Ext.define('");
+                if(node.localSymbol && node.localSymbol.exportSymbol){
+                    write(resolver.getFullyQualifiedName(node.localSymbol.exportSymbol));
+                }else{
+                    emit(node.name);    
+                }
+                write("', {");
+                writeLine();
+                increaseIndent();
+                write("singleton : true,");
+                
+                forEach(node.members, member => {
+                    writeLine();
+                    emitStart(member);
+                    emit(member.name);
+                    write(' : ');
+                    if (member.initializer && !isConstEnum) {
+                        emit(member.initializer);
+                    }else {
+                        write(resolver.getEnumMemberValue(member).toString());
+                    }
+                    emitEnd(member);
+                    if(node.members.indexOf(member) < node.members.length - 1){
+                        write(',');
+                    }
+                });
+                decreaseIndent();
+                writeLine();
+                write("});");
+                //TODO: const enums with Extjs? maybe its sencha cmd will raise a error if class isnot found...
+                return;
                 // const enums are completely erased during compilation.
                 var isConstEnum = isConst(node);
                 if (isConstEnum && !compilerOptions.preserveConstEnums) {
