@@ -319,7 +319,7 @@ compileFile(tscFile, compilerSources, [builtLocalDirectory, copyright].concat(co
 var servicesFile = path.join(builtLocalDirectory, "typescriptServices.js");
 compileFile(servicesFile, servicesSources,[builtLocalDirectory, copyright].concat(servicesSources),
             /*prefixes*/ [copyright],
-            /*useBuiltCompiler*/ true,
+            /*useBuiltCompiler*/ false,
             /*noOutFile*/ false,
             /*generateDeclarations*/ false,
             /*outDir*/ undefined,
