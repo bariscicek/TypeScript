@@ -1480,6 +1480,8 @@ module ts {
 
             var currentSourceFile: SourceFile;
 
+            var currentClass : ClassDeclaration; //@extjs required (for now) to emit super calls > Class.superclass.method()
+
             var extendsEmitted = false;
 
             /** write emitted output to disk*/
@@ -2183,17 +2185,29 @@ module ts {
                     write("this");
                 }
             }
+            //@extjs TODO: probably there is simple way to get current class symbol
+            //we cannot use/assume this.callParent because one method can acess a different super method:
+            //showAt(){ super.show() } > super.show() cannot be emitted as this.callParent()
+            function emitMethodSuperClass(node: Node, isConstructor? : boolean){
+                if(currentClass){
+                    write(getDeclClassFullName(currentClass)); //emit base class
+                    write('.superclass.');
+                    write(isConstructor ? 'constructor' : (<PropertyAccessExpression>node.parent).name.text);
 
+                }else{
+                    write('fail to emit super call');    
+                }                
+            }
             function emitSuper(node: Node) {
                 var flags = resolver.getNodeCheckFlags(node);
                 if (flags & NodeCheckFlags.SuperInstance) {
-                    write("this.callParent");
+                    emitMethodSuperClass(node);
                 }
                 else if (flags & NodeCheckFlags.SuperStatic) {
-                    write("this.callParent");
+                    emitMethodSuperClass(node);
                 }
                 else {
-                    write("this.callParent");
+                    emitMethodSuperClass(node);
                 }
             }
 
@@ -2340,9 +2354,10 @@ module ts {
             }
 
             function emitCallExpression(node: CallExpression) {
-                var superCall = false;
+                var superCall     = false;
+
                 if (node.expression.kind === SyntaxKind.SuperKeyword) {
-                    write("this.callParent");
+                    emitMethodSuperClass(node, /*isConstructor*/ true);
                     superCall = true;
                 }
                 else {
@@ -2350,13 +2365,13 @@ module ts {
                     superCall = node.expression.kind === SyntaxKind.PropertyAccessExpression && (<PropertyAccessExpression>node.expression).expression.kind === SyntaxKind.SuperKeyword;
                 }
                 if (superCall) {
-                    write("(["); //write(".call(");extjs
+                    write('.call(this'); //write(".call(");extjs
                     //emitThis(node.expression);
                     if (node.arguments.length) {
-                        //write(", ");
+                        write(", ");
                         emitCommaList(node.arguments, /*includeTrailingComma*/ false);
                     }
-                    write("])");
+                    write(')');
                 }
                 else {
                     write("(");
@@ -3274,7 +3289,9 @@ module ts {
                 //}
                 writeLine();
                 //emitConstructorOfClass();
+                currentClass = node; //@extjs
                 emitClassMembers(node, emitConstructorOfClass);
+                currentClass = null; //@extjs
                 //emitMemberFunctions(node);
                 //emitMemberAssignments(node, NodeFlags.Static);
                 writeLine();
