@@ -30,4 +30,4 @@ This project is compatible with Typescript 1.4 and ExtJS 3, 4 and 5. The emitted
 
 - Install vs 2013 plugin: https://visualstudiogallery.msdn.microsoft.com/2d42d8dc-e085-45eb-a30b-3f7d50d55304
 - Download latest modified compiler: https://github.com/fabioparra/TypeScript/releases/tag/v1.4
-- Run batch copy_to_vs2013.bat as administrator
+- Run copy_to_vs2013.bat file as administrator
