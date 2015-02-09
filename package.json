@@ -16,8 +16,8 @@
 		"compiler", 
 		"language", 
 		"javascript",
-	    "ExtJS",
-	    "Sencha"
+		"ExtJS",
+		"Sencha"
 	],
 	"bugs": {
 		"url" : "https://github.com/fabioparra/TypeScript/issues"
