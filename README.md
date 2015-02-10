@@ -20,7 +20,7 @@ To get the most use out of this compiler you will also need some type declaratio
 
 https://rawgithub.com/fabioparra/TypeScriptExtJSEmitter/master/TypeScriptExtJSEmitter/index.html
 
-##Compatability
+##Compatibility
 
 This project is compatible with Typescript 1.4 and ExtJS 3, 4 and 5. The emitted classes can be processed by Sencha CMD.
 
@@ -31,3 +31,14 @@ This project is compatible with Typescript 1.4 and ExtJS 3, 4 and 5. The emitted
 - Install vs 2013 plugin: https://visualstudiogallery.msdn.microsoft.com/2d42d8dc-e085-45eb-a30b-3f7d50d55304
 - Download latest modified compiler: https://github.com/fabioparra/TypeScript/releases/tag/v1.4
 - Run copy_to_vs2013.bat file as administrator
+
+##Usage with IntelliJ IDEA
+
+IntelliJ IDEA 14 (Ultimate Edition only) has Typescript support. The ExtJS emitter can be used instead of the regular compiler.
+
+Follow the instructions for setting up regular Typescript support (https://www.jetbrains.com/idea/help/typescript-support.html) but ensure that you do the following:
+
+1.  Install `typescript-extjs` from NPM instead of `typescript`.
+
+2.  Edit the file watcher that IntelliJ creates for Typescript so that it uses the `tsc-extjs` executable rather than `tsc`
+
