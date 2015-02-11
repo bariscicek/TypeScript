@@ -3157,9 +3157,9 @@ module ts {
             function changeClassFullNameToCmdSupport(parts : string[]) : string;
             function changeClassFullNameToCmdSupport(name : any) : string {
                 var parts : string[] = name.split ? name.split('.') : name;
-                //sencha cmd support > change ST to Ext
-                if(parts[0] === this.senchaTouchNamespace && this.extJSNamespace){
-                    parts[0] = this.extJSNamespace;    
+                //sencha cmd support > change ST to Ext > useful in projects with desktop an mobile app
+                if(parts[0] === 'ST'){
+                    parts[0] = 'Ext';
                 }
                 return parts.join('.');
             }
