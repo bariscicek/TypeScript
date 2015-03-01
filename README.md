@@ -42,3 +42,17 @@ Follow the instructions for setting up regular Typescript support (https://www.j
 
 2.  Edit the file watcher that IntelliJ creates for Typescript so that it uses the `tsc-extjs` executable rather than `tsc`
 
+##Integration with Sencha CMD
+
+If you are using Sencha CMD, then you can add this snippet to your `build.xml` to compile all Typescript files to Javascript. The compilation will happen before any minification and combining of Javascript files.
+
+```xml
+    <target name="-before-refresh">
+
+        <!-- compile Typescript to ExtJS-compatible Javascript -->
+        <apply executable="tsc-extjs" failonerror="true" verbose="true">
+            <fileset dir="${basedir}/app" includes="**/*.ts"/>
+        </apply>
+
+    </target>
+```
