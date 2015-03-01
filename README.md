@@ -47,12 +47,12 @@ Follow the instructions for setting up regular Typescript support (https://www.j
 If you are using Sencha CMD, then you can add this snippet to your `build.xml` to compile all Typescript files to Javascript. The compilation will happen before any minification and combining of Javascript files.
 
 ```xml
-    <target name="-before-refresh">
+<target name="-before-refresh">
 
-        <!-- compile Typescript to ExtJS-compatible Javascript -->
-        <apply executable="tsc-extjs" failonerror="true" verbose="true">
-            <fileset dir="${basedir}/app" includes="**/*.ts"/>
-        </apply>
+    <!-- compile Typescript to ExtJS-compatible Javascript -->
+    <apply executable="tsc-extjs" failonerror="true" verbose="true">
+        <fileset dir="${basedir}/app" includes="**/*.ts"/>
+    </apply>
 
-    </target>
+</target>
 ```
