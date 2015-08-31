@@ -74,6 +74,7 @@ module ts {
             getAliasedSymbol: resolveAlias,
             getEmitResolver,
             getExportsOfModule: getExportsOfModuleAsArray,
+            resolveName,
         };
 
         let unknownSymbol = createSymbol(SymbolFlags.Property | SymbolFlags.Transient, "unknown");
@@ -11761,7 +11762,8 @@ module ts {
             let symbol = getNodeLinks(node).resolvedSymbol;
             if (symbol && (symbol.flags & SymbolFlags.EnumMember)) {
                 // inline property\index accesses only for const enums
-                if (isConstEnumDeclaration(symbol.valueDeclaration.parent)) {
+                //@extjs aways emit enum value > allow use enum in class declaration before enum class loaded
+                if (isConstEnumDeclaration(symbol.valueDeclaration.parent) || compilerOptions.module === ModuleKind.ExtJS) {
                     return getEnumMemberValue(<EnumMember>symbol.valueDeclaration);
                 }
             }
@@ -12064,6 +12066,11 @@ module ts {
                 serializeTypeOfNode,
                 serializeParameterTypesOfNode,
                 serializeReturnTypeOfNode,
+                //@extjs https://github.com/Microsoft/TypeScript/issues/1255
+                getFullyQualifiedName,
+                getTypeFromTypeNode,
+                getNodeLinks,
+                getSuperContainer,
             };
         }
 

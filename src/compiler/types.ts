@@ -1293,6 +1293,11 @@ module ts {
         serializeTypeOfNode(node: Node, getGeneratedNameForNode: (Node: Node) => string): string | string[];
         serializeParameterTypesOfNode(node: Node, getGeneratedNameForNode: (Node: Node) => string): (string | string[])[];
         serializeReturnTypeOfNode(node: Node, getGeneratedNameForNode: (Node: Node) => string): string | string[];
+         //@extjs https://github.com/Microsoft/TypeScript/issues/1255
+        getFullyQualifiedName(symbol: Symbol): string;
+        getTypeFromTypeNode(node: TypeNode): Type;
+        getNodeLinks(node: Node): NodeLinks;
+        getSuperContainer(node: Node, includeFunctions: boolean): Node;
     }
 
     export const enum SymbolFlags {
@@ -1698,6 +1703,8 @@ module ts {
         AMD = 2,
         UMD = 3,
         System = 4,
+        //@extjs module
+        ExtJS = 99
     }
 
     export const enum NewLineKind {

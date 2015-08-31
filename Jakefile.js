@@ -344,7 +344,7 @@ var nodeDefinitionsFile = path.join(builtLocalDirectory, "typescript.d.ts");
 
 compileFile(servicesFile, servicesSources,[builtLocalDirectory, copyright].concat(servicesSources),
             /*prefixes*/ [copyright],
-            /*useBuiltCompiler*/ true,
+            /*useBuiltCompiler*/ false,
             /*noOutFile*/ false,
             /*generateDeclarations*/ true,
             /*outDir*/ undefined,

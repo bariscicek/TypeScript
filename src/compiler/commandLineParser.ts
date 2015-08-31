@@ -61,6 +61,7 @@ module ts {
                 "amd": ModuleKind.AMD,
                 "system": ModuleKind.System,
                 "umd": ModuleKind.UMD,
+                "extjs": ModuleKind.ExtJS,
             },
             description: Diagnostics.Specify_module_code_generation_Colon_commonjs_amd_system_or_umd,
             paramType: Diagnostics.KIND,
