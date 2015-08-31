@@ -1,7 +1,7 @@
 TypeScript ExtJS Emitter
 ======================
 
-A fork of Typescript 1.4 that emits classes in a way that ExtJS understands.
+A fork of Typescript 1.5 that emits classes in a way that ExtJS understands.
 
 ##Why?
 
@@ -22,9 +22,16 @@ https://rawgithub.com/fabioparra/TypeScriptExtJSEmitter/master/TypeScriptExtJSEm
 
 ##Compatibility
 
-This project is compatible with Typescript 1.4 and ExtJS 3, 4 and 5. The emitted classes can be processed by Sencha CMD.
+This project is compatible with Typescript 1.5 / 1.4 and ExtJS 3, 4 and 5. The emitted classes can be processed by Sencha CMD.
 
-##Usage with Visual Studio 2013
+##Usage with Visual Studio 2015 (TypeScript 1.5)
+
+####Update tsc.js and typescriptServices.js files (used by visual studio editor and msbuild tasks )
+
+- Download latest modified compiler: https://github.com/fabioparra/TypeScript/releases/tag/v1.5
+- Run copy_to_vs2015.bat file as administrator
+
+##Usage with Visual Studio 2013 (TypeScript 1.4)
 
 ####Update tsc.js and typescriptServices.js files (used by visual studio editor and msbuild tasks )
 
