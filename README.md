@@ -9,9 +9,14 @@ The Javascript emitted by the Typescript compiler is not compatible with the Ext
 
 This forked compiler emits code that looks just like the ExtJS classes you would write in regular Javascript.
 
+##How?
+ 
+ We created a new "module system" inside the compiler. Just invoke node tsc.js with command line argument -m extjs .
+
 ##ExtJS API Type Declarations
 
 To get the most use out of this compiler you will also need some type declarations (*.d.ts files) for the ExtJS API. There is a companion project to provide these: https://github.com/Dretch/typescript-declarations-for-ext
+
 
 ##Screenshot
 ![ScreenShot](https://raw.github.com/fabioparra/TypeScriptExtJSEmitter/master/TypeScriptExtJSEmitter/images/screenshot.jpg)
