@@ -445,7 +445,7 @@ var nodeStandaloneDefinitionsFile = path.join(builtLocalDirectory, "typescript_s
 
 compileFile(servicesFile, servicesSources,[builtLocalDirectory, copyright].concat(servicesSources),
             /*prefixes*/ [copyright],
-            /*useBuiltCompiler*/ true,
+            /*useBuiltCompiler*/ false,
             /*noOutFile*/ false,
             /*generateDeclarations*/ true,
             /*outDir*/ undefined,
