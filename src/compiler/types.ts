@@ -1899,6 +1899,7 @@ namespace ts {
         /* @internal */ getIdentifierCount(): number;
         /* @internal */ getSymbolCount(): number;
         /* @internal */ getTypeCount(): number;
+        /* @extjs    */ resolveName(location: Node, name: string, meaning: SymbolFlags, nameNotFoundMessage: DiagnosticMessage, nameArg: string | Identifier): Symbol;
     }
 
     export interface SymbolDisplayBuilder {
@@ -2059,6 +2060,11 @@ namespace ts {
         moduleExportsSomeValue(moduleReferenceExpression: Expression): boolean;
         isArgumentsLocalBinding(node: Identifier): boolean;
         getExternalModuleFileFromDeclaration(declaration: ImportEqualsDeclaration | ImportDeclaration | ExportDeclaration | ModuleDeclaration): SourceFile;
+
+        /*@extjs */ getFullyQualifiedName(symbol: Symbol): string;
+        /*@extjs */ getTypeFromTypeNode(node: TypeNode): Type;
+        /*@extjs */ getNodeLinks(node: Node): NodeLinks;
+        /*@extjs */ getSuperContainer(node: Node, stopOnFunctions: boolean): Node;        
         getTypeReferenceDirectivesForEntityName(name: EntityNameOrEntityNameExpression): string[];
         getTypeReferenceDirectivesForSymbol(symbol: Symbol, meaning?: SymbolFlags): string[];
     }
@@ -2679,6 +2685,8 @@ namespace ts {
         System = 4,
         ES6 = 5,
         ES2015 = ES6,
+        //@extjs module
+        ExtJS = 99,
     }
 
     export const enum JsxEmit {
