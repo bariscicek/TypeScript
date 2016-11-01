@@ -1342,7 +1342,6 @@ namespace ts {
                     return getMergedSymbol(symbol);
                 }
             }
-
             const resolvedModule = getResolvedModule(getSourceFileOfNode(location), moduleReferenceLiteral.text);
             const sourceFile = resolvedModule && host.getSourceFile(resolvedModule.resolvedFileName);
             if (sourceFile) {
