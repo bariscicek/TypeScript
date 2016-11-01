@@ -100,6 +100,7 @@ namespace ts {
             getAliasedSymbol: resolveAlias,
             getEmitResolver,
             getExportsOfModule: getExportsOfModuleAsArray,
+            resolveName,
 
             getJsxElementAttributesType,
             getJsxIntrinsicTagNames,
@@ -1341,7 +1342,6 @@ namespace ts {
                     return getMergedSymbol(symbol);
                 }
             }
-
             const resolvedModule = getResolvedModule(getSourceFileOfNode(location), moduleReferenceLiteral.text);
             const sourceFile = resolvedModule && host.getSourceFile(resolvedModule.resolvedFileName);
             if (sourceFile) {
@@ -17028,7 +17028,7 @@ namespace ts {
             if (node === firstDeclaration) {
                 if (enumSymbol.declarations.length > 1) {
                     // check that const is placed\omitted on all enum declarations
-                    forEach(enumSymbol.declarations, decl => {
+                    forEach(enumSymbol.declarations, decl => {                       
                         if (isConstEnumDeclaration(decl) !== enumIsConst) {
                             error(decl.name, Diagnostics.Enum_declarations_must_all_be_const_or_non_const);
                         }
@@ -18536,8 +18536,8 @@ namespace ts {
 
             const symbol = getNodeLinks(node).resolvedSymbol;
             if (symbol && (symbol.flags & SymbolFlags.EnumMember)) {
-                // inline property\index accesses only for const enums
-                if (isConstEnumDeclaration(symbol.valueDeclaration.parent)) {
+                //@extjs aways emit enum value > allow use enum in class declaration before enum class loaded
+                if (isConstEnumDeclaration(symbol.valueDeclaration.parent) || compilerOptions.module === ModuleKind.ExtJS) {
                     return getEnumMemberValue(<EnumMember>symbol.valueDeclaration);
                 }
             }
@@ -18685,6 +18685,10 @@ namespace ts {
                 moduleExportsSomeValue,
                 isArgumentsLocalBinding,
                 getExternalModuleFileFromDeclaration,
+                getFullyQualifiedName,
+                getTypeFromTypeNode,
+                getNodeLinks,
+                getSuperContainer,
                 getTypeReferenceDirectivesForEntityName,
                 getTypeReferenceDirectivesForSymbol
             };
