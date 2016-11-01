@@ -2985,7 +2985,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
                     return;
                 }
 
-                emitToken(SyntaxKind.OpenBraceToken, node.pos);
                 if (compilerOptions.module !== ModuleKind.ExtJS || node.kind !== SyntaxKind.ModuleBlock) {
                     emitToken(SyntaxKind.OpenBraceToken, node.pos);
                     increaseIndent();
